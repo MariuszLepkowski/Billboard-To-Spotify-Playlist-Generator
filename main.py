@@ -2,6 +2,7 @@ import requests
 import spotipy
 from bs4 import BeautifulSoup
 from spotipy.oauth2 import SpotifyOAuth
+import urllib.parse
 import os
 from dotenv import load_dotenv
 
@@ -45,11 +46,16 @@ songs = list(zip(artist_names, song_names))
 song_uris = []
 for song in songs:
     try:
-        results = sp.search(q=song, type="track", market="US")
+        title = song[1]
+        artist = song[0]
+        query = f"{title} artist:{artist}"
+        url_query = urllib.parse.quote(query)
+        results = sp.search(q=url_query, type="track", market="US")
         song_uri = results["tracks"]["items"][0]["uri"]
-        print(song_uri)
         song_uris.append(song_uri)
     except spotipy.exceptions.SpotifyException:
+        continue
+    except IndexError:
         continue
 
 
