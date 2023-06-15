@@ -1,3 +1,5 @@
+import json
+
 import requests
 import spotipy
 from bs4 import BeautifulSoup
@@ -20,6 +22,7 @@ auth_manager = SpotifyOAuth(
     show_dialog=True,
     cache_path="token.txt"
 )
+
 
 sp = spotipy.Spotify(auth_manager=auth_manager)
 user_id = sp.current_user()["id"]
@@ -48,12 +51,23 @@ for song in songs:
     try:
         title = song[1]
         artist = song[0]
-        query = f"{title} artist:{artist}"
+        query = f"track:{title} artist:{artist}"
         url_query = urllib.parse.quote(query)
         results = sp.search(q=url_query, type="track", market="US")
         song_uri = results["tracks"]["items"][0]["uri"]
         song_uris.append(song_uri)
     except spotipy.exceptions.SpotifyException:
+
+        with open("token.txt", "r") as file:
+            data = json.load(file)
+            refresh_token = data["refresh_token"]
+
+        response = requests.post("https://accounts.spotify.com/api/token", data={
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "client_id": SPOTIPY_CLIENT_ID,
+            "client_secret": SPOTIPY_CLIENT_SECRET,
+        })
         continue
     except IndexError:
         continue
